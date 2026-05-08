@@ -72,7 +72,7 @@ function App() {
   return (
     <div className="app-container">
       <header>
-        <h1>BB</h1>
+        <h1>bb</h1>
         {profile && <div className="week-badge">W{currentWeek}</div>}
       </header>
 
