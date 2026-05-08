@@ -89,41 +89,6 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
     <div className="dashboard-view">
       {error && <ErrorBanner message={error} onClose={() => setError(null)} />}
 
-      {/* Temporary Icon Comparison */}
-      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-        <label>Design Comparison: Favicon Options</label>
-        <div style={{ display: 'flex', gap: 'var(--space-lg)', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-md) 0' }}>
-          <div style={{ textAlign: 'center' }}>
-            <svg width="48" height="48" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="16" cy="16" r="14" stroke="#ff8c42" stroke-width="1" stroke-dasharray="2 2" opacity="0.4"/>
-              <circle cx="16" cy="16" r="8" fill="url(#grad1)"/>
-              <defs>
-                <linearGradient id="grad1" x1="8" y1="8" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#ff8c42"/>
-                  <stop offset="100%" stop-color="#e2725b"/>
-                </linearGradient>
-              </defs>
-            </svg>
-            <div className="text-xs text-secondary" style={{ marginTop: 'var(--space-xs)' }}>Seed</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <svg width="48" height="48" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M16 2L19 13L30 16L19 19L16 30L13 19L2 16L13 13L16 2Z" fill="#ff8c42"/>
-              <path d="M16 6L18 14L26 16L18 18L16 26L14 18L6 16L14 14L16 6Z" fill="white" fill-opacity="0.3"/>
-            </svg>
-            <div className="text-xs text-secondary" style={{ marginTop: 'var(--space-xs)' }}>Spark</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <svg width="48" height="48" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="32" height="32" rx="8" fill="#141211"/>
-              <text x="42%" y="62%" dominant-baseline="middle" text-anchor="middle" fill="#ff8c42" font-family="serif" font-weight="700" font-size="15">bb</text>
-              <path d="M23 4L24 7.5L27.5 8.5L24 9.5L23 13L22 9.5L18.5 8.5L22 7.5L23 4Z" fill="#ff8c42"/>
-            </svg>
-            <div className="text-xs text-secondary" style={{ marginTop: 'var(--space-xs)' }}>Mystical bb</div>
-          </div>
-        </div>
-      </div>
-
       <HeatMap 
         currentWeek={currentWeek} 
         onDayClick={(date, dayEvents, dayTasks) => setSelectedDay({ date, events: dayEvents, completedTasks: dayTasks })}
