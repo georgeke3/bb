@@ -100,6 +100,7 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
 
   return (
     <div className="heatmap-container" style={{ margin: '0 0 1.5rem 0' }}>
+      <label style={{ marginLeft: 'var(--space-xs)', marginBottom: 'var(--space-xs)', display: 'block' }}>Story Map</label>
       <div 
         ref={scrollRef}
         style={{ 
@@ -112,7 +113,7 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
           flexDirection: 'column'
         }}
       >
-        <div style={{ position: 'relative', display: 'flex' }}>
+        <div style={{ position: 'relative', display: 'flex', width: 'max-content' }}>
           
           {/* Frozen Y-Axis Labels Column */}
           <div style={{ 
@@ -147,7 +148,7 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
           </div>
 
           {/* Scrollable Content */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', paddingRight: '1.5rem' }}>
             
             {/* Grid Area */}
             <div style={{ display: 'flex', gap: `${GAP}px` }}>
