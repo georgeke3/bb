@@ -89,54 +89,6 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
     <div className="dashboard-view">
       {error && <ErrorBanner message={error} onClose={() => setError(null)} />}
 
-      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-        <label>Refined Week Icons (Single Shape)</label>
-        <div style={{ display: 'flex', gap: 'var(--space-lg)', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-md) 0' }}>
-          <div style={{ textAlign: 'center' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2C12 2 4 8 4 13C4 17.4183 7.58172 21 12 21C16.4183 21 20 17.4183 20 13C20 8 12 2 12 2Z" strokeLinejoin="round" />
-              <path d="M12 9C12 9 14 11 12 13C10 15 12 17 12 17" opacity="0.4" />
-            </svg>
-            <div className="text-xs text-secondary">Stone</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="var(--primary)" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 21.5C12 21.5 19 14.5 19 9.5C19 5.35786 15.866 2 12 2C8.13401 2 5 5.35786 5 9.5C5 14.5 12 21.5 12 21.5ZM12 12C10.6193 12 9.5 10.8807 9.5 9.5C9.5 8.11929 10.6193 7 12 7C13.3807 7 14.5 8.11929 14.5 9.5C14.5 10.8807 13.3807 12 12 12Z" fillRule="evenodd" clipRule="evenodd" />
-            </svg>
-            <div className="text-xs text-secondary">Droplet</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 3C15 3 12 6 12 10C12 15 14 21 14 21C14 21 5 16 5 10C5 6 8 3 11 3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <div className="text-xs text-secondary">Gua Sha</div>
-          </div>
-        </div>
-
-        <label style={{ marginTop: 'var(--space-md)' }}>Refined Plan Icons (Single Stroke)</label>
-        <div style={{ display: 'flex', gap: 'var(--space-lg)', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-md) 0' }}>
-          <div style={{ textAlign: 'center' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 12.5C4 12.5 7 16 10 16C13 16 20 7.5 20 7.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <div className="text-xs text-secondary">Fluid</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
-              <path d="M5 11.5C5 11.5 7 15 11 15C15 15 19 6 19 6" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="0.5 4" strokeDashcap="round" />
-              <path d="M5 11.5C5 11.5 7 15 11 15C15 15 19 6 19 6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <div className="text-xs text-secondary">Cloud</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 13C6 13 8 15 11 15C14 15 18 5 18 5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <div className="text-xs text-secondary">Sleek</div>
-          </div>
-        </div>
-      </div>
-
       <HeatMap 
         currentWeek={currentWeek} 
         onDayClick={(date, dayEvents, dayTasks) => setSelectedDay({ date, events: dayEvents, completedTasks: dayTasks })}
