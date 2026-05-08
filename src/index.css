@@ -95,7 +95,7 @@ header {
 header h1 {
   margin: 0;
   font-size: var(--size-lg);
-  font-weight: 300;
+  font-weight: 700;
   letter-spacing: 0.1em;
   background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
   -webkit-background-clip: text;

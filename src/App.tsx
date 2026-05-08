@@ -92,20 +92,15 @@ function App() {
         <button className={`nav-item ${activeView === 'week' ? 'active' : ''}`} onClick={() => setActiveView('week')} title="Week">
           <span className="nav-icon">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" fill="none" stroke="currentColor" strokeWidth="2" />
-              <circle cx="12" cy="12" r="3" />
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM12 11.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" opacity="0.4" />
+              <path d="M12 7L13.5 11L18 12L13.5 13L12 17L10.5 13L6 12L10.5 11L12 7Z" />
             </svg>
           </span>
         </button>
         <button className={`nav-item ${activeView === 'todo' ? 'active' : ''}`} onClick={() => setActiveView('todo')} title="Plan">
           <span className="nav-icon">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <rect x="3" y="4" width="18" height="2" rx="1" />
-              <rect x="3" y="11" width="18" height="2" rx="1" />
-              <rect x="3" y="18" width="18" height="2" rx="1" />
-              <circle cx="6" cy="5" r="1" fill="white" />
-              <circle cx="6" cy="12" r="1" fill="white" />
-              <circle cx="6" cy="19" r="1" fill="white" />
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
             </svg>
           </span>
         </button>

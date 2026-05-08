@@ -89,6 +89,32 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
     <div className="dashboard-view">
       {error && <ErrorBanner message={error} onClose={() => setError(null)} />}
 
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+        <label>Plan Icon Options</label>
+        <div style={{ display: 'flex', gap: 'var(--space-lg)', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-md) 0' }}>
+          <div style={{ textAlign: 'center' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="var(--primary)" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+            </svg>
+            <div className="text-xs text-secondary">Classic</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="12" cy="12" r="10" opacity="0.2" />
+            </svg>
+            <div className="text-xs text-secondary">Circled</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="var(--primary)" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+              <path d="M12 2L13.5 4.5L16 5L14.5 7L15 9.5L12 8.5L9 9.5L9.5 7L8 5L10.5 4.5L12 2Z" opacity="0.5" />
+            </svg>
+            <div className="text-xs text-secondary">Mystic</div>
+          </div>
+        </div>
+      </div>
+
       <HeatMap 
         currentWeek={currentWeek} 
         onDayClick={(date, dayEvents, dayTasks) => setSelectedDay({ date, events: dayEvents, completedTasks: dayTasks })}
