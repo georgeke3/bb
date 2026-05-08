@@ -100,8 +100,8 @@ function App() {
         <button className={`nav-item ${activeView === 'todo' ? 'active' : ''}`} onClick={() => setActiveView('todo')} title="Plan">
           <span className="nav-icon">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 12.5C4 12.5 7 16 10 16C13 16 20 7.5 20 7.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M6 12.5C6 12.5 8 14.5 10 14.5C12 14.5 17.5 8.5 17.5 8.5" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" />
+              <path d="M6 12L10 16L18 8" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M8 12L10 14L16 8" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" />
             </svg>
           </span>
         </button>
