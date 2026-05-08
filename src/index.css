@@ -144,8 +144,17 @@ main {
 }
 
 .nav-icon {
-  font-size: 1.5rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.nav-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
 }
 
 .nav-item.active .nav-icon {
