@@ -56,8 +56,8 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
     });
   }, [anniversaryDate, events, flatTasks]);
 
-  const CELL_SIZE = 14;
-  const GAP = 1;
+  const CELL_SIZE = 10;
+  const GAP = 2;
   const COLUMN_WIDTH = CELL_SIZE + GAP;
 
   const monthLabels = useMemo(() => {
@@ -99,13 +99,13 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
   if (!anniversaryDate) return null;
 
   return (
-    <div className="heatmap-container" style={{ margin: '0 0 1.5rem 0' }}>
-      <label style={{ marginLeft: 'var(--space-xs)', marginBottom: 'var(--space-xs)', display: 'block' }}>Story Map</label>
+    <div className="heatmap-container" style={{ margin: '0 0 2rem 0' }}>
+      <label style={{ marginLeft: 'var(--space-xs)', marginBottom: 'var(--space-sm)', display: 'block' }}>Story Map</label>
       <div 
         ref={scrollRef}
         style={{ 
           overflowX: 'auto', 
-          padding: '1.25rem 1rem', 
+          padding: '1.5rem 1.25rem', 
           background: 'var(--card-bg)',
           borderRadius: '20px',
           border: '1px solid var(--border)',
@@ -120,12 +120,12 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
             display: 'flex', 
             flexDirection: 'column', 
             position: 'sticky',
-            left: '-1rem',
+            left: '-1.25rem',
             backgroundColor: 'var(--card-bg)',
             zIndex: 100,
-            paddingRight: '6px',
+            paddingRight: '8px',
             paddingLeft: '0.5rem',
-            marginRight: '2px',
+            marginRight: '4px',
             borderRight: '1px solid var(--border)'
           }}>
             <div style={{ height: '14px', marginBottom: '4px' }} />
@@ -133,7 +133,7 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
               <div key={i} style={{ 
                 width: '14px', 
                 height: `${CELL_SIZE}px`, 
-                fontSize: '0.55rem', 
+                fontSize: '0.5rem', 
                 color: 'var(--text-secondary)', 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -148,7 +148,7 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
           </div>
 
           {/* Scrollable Content */}
-          <div style={{ display: 'flex', flexDirection: 'column', paddingRight: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', paddingRight: '2rem' }}>
             
             {/* Grid Area */}
             <div style={{ display: 'flex', gap: `${GAP}px` }}>
@@ -173,7 +173,7 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
                         marginBottom: '4px',
                         border: 'none', 
                         background: isCurrent ? 'var(--primary)' : 'none', 
-                        fontSize: '0.5rem', 
+                        fontSize: '0.45rem', 
                         color: isCurrent ? 'white' : 'var(--text-secondary)', 
                         cursor: 'pointer',
                         fontWeight: 800,
