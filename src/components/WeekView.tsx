@@ -198,7 +198,7 @@ export default function WeekView({ currentWeek, viewingWeek, setViewingWeek, gem
               {weekEvents.map(e => (
                 <div key={e.id} className="card" style={{ padding: 'var(--space-md)', marginBottom: 0, borderRadius: 'var(--radius-md)', background: 'var(--card-bg-elevated)', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div style={{ flex: 1 }}>
-                    <div className="text-xs text-secondary" style={{ marginBottom: '4px' }}>{format(parseISO(e.timestamp), 'h:mm a')}</div>
+                    <div className="text-xs text-secondary" style={{ marginBottom: '4px' }}>{format(parseISO(e.timestamp), 'EEEE, MMM d · h:mm a')}</div>
                     <div className="text-sm font-bold">{e.aiSummary}</div>
                   </div>
                   <button onClick={() => setEventToDelete(e.id)} className="btn-text" style={{ color: 'var(--critical)', textDecoration: 'none', fontSize: '0.7rem' }}>Remove</button>

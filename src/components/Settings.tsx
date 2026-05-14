@@ -94,7 +94,7 @@ export default function Settings() {
               type="date" 
               value={birthDate} 
               onChange={(e) => setBirthDate(e.target.value)} 
-              style={{ width: '100%', marginTop: '0.25rem' }}
+              style={{ width: '100%', marginTop: '0.25rem', boxSizing: 'border-box' }}
             />
           </div>
           <div>
@@ -127,8 +127,8 @@ export default function Settings() {
       <div className="card">
         <h3>Data Management</h3>
         <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-          <button className="btn-secondary" style={{ flex: 1 }} onClick={handleExport}>Export JSON</button>
-          <label className="btn-secondary" style={{ flex: 1, textAlign: 'center', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button className="btn-secondary" style={{ flex: 1, fontSize: '0.85rem' }} onClick={handleExport}>Export JSON</button>
+          <label className="btn-secondary" style={{ flex: 1, textAlign: 'center', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
             Import JSON
             <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
           </label>
