@@ -6,7 +6,7 @@ import { getAnniversaryDate, getTrimester } from '../utils/dateHelpers';
 
 interface HeatMapProps {
   currentWeek: number;
-  onDayClick: (date: Date, events: ContextEvent[], completedTasks: ToDo[]) => void;
+  onDayClick: (date: Date, events: ContextEvent[], completedTasks: ToDo[], appointments: ToDo[]) => void;
   onWeekClick: (week: number) => void;
 }
 
@@ -49,9 +49,11 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
         const date = addDays(weekStart, dayIndex);
         const dayEvents = events.filter(e => isSameDay(parseISO(e.timestamp), date));
         const dayCompletedTasks = flatTasks.filter(t => t.isComplete && t.completedAt && isSameDay(parseISO(t.completedAt), date));
-        const intensity = dayEvents.length + dayCompletedTasks.length + dayEvents.reduce((acc, e) => acc + e.symptoms.length, 0);
+        const dayAppts = flatTasks.filter(t => t.type === 'appointment' && t.specificDate && isSameDay(parseISO(t.specificDate), date));
         
-        return { date, events: dayEvents, completedTasks: dayCompletedTasks, intensity };
+        const intensity = dayEvents.length + dayCompletedTasks.length + dayAppts.length + dayEvents.reduce((acc, e) => acc + e.symptoms.length, 0);
+        
+        return { date, events: dayEvents, completedTasks: dayCompletedTasks, appointments: dayAppts, intensity };
       });
     });
   }, [anniversaryDate, events, flatTasks]);
@@ -191,6 +193,7 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
 
                     {weekData.map((dayData, dIndex) => {
                       const intensity = dayData.intensity;
+                      const hasAppt = dayData.appointments.length > 0;
                       let color = '#25211f';
                       if (intensity > 0) color = '#4d3b2e';
                       if (intensity > 3) color = '#7d583e';
@@ -200,7 +203,7 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
                       return (
                         <div 
                           key={dIndex}
-                          onClick={() => onDayClick(dayData.date, dayData.events, dayData.completedTasks)}
+                          onClick={() => onDayClick(dayData.date, dayData.events, dayData.completedTasks, dayData.appointments)}
                           style={{ 
                             width: `${CELL_SIZE}px`, 
                             height: `${CELL_SIZE}px`, 
@@ -208,9 +211,16 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
                             borderRadius: '1px',
                             cursor: 'pointer',
                             outline: isCurrent ? '1px solid var(--primary)' : 'none',
-                            outlineOffset: '-1px'
+                            outlineOffset: '-1px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
                           }}
-                        />
+                        >
+                          {hasAppt && (
+                            <div style={{ width: '2px', height: '2px', backgroundColor: 'white', borderRadius: '50%' }}></div>
+                          )}
+                        </div>
                       );
                     })}
                   </div>

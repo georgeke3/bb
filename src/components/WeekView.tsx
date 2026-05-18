@@ -93,6 +93,7 @@ export default function WeekView({ currentWeek, viewingWeek, setViewingWeek, gem
 
   const confirmRecommendations = () => {
     if (!recommendations) return;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const selected = recommendations.filter(r => r.selected).map(({ selected: _, ...rest }) => rest);
     selected.forEach(s => addTask({ ...s, isComplete: false }));
     setRecommendations(null);

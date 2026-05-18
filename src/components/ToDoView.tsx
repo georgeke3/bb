@@ -247,6 +247,7 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
 
   const confirmSplit = () => {
     if (!splitSuggestions) return;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const selected = splitSuggestions.filter(s => s.selected).map(({ selected: _, ...rest }) => rest);
     if (selected.length > 0) {
       splitTask(task.id, selected);

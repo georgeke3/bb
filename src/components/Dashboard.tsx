@@ -21,7 +21,7 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
   const [error, setError] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<any[] | null>(null);
   
-  const [selectedDay, setSelectedDay] = useState<{ date: Date, events: ContextEvent[], completedTasks: ToDo[] } | null>(null);
+  const [selectedDay, setSelectedDay] = useState<{ date: Date, events: ContextEvent[], completedTasks: ToDo[], appointments: ToDo[] } | null>(null);
 
   const selectedDayWeek = useMemo(() => {
     if (!selectedDay || !profile?.birthDate) return 1;
@@ -75,7 +75,8 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
 
   const confirmRecommendations = () => {
     if (!recommendations) return;
-    const selected = recommendations.filter(r => r.selected).map(({ selected, ...rest }) => rest);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const selected = recommendations.filter(r => r.selected).map(({ selected: _, ...rest }) => rest);
     selected.forEach(s => addTask({ ...s, isComplete: false }));
     setRecommendations(null);
   };
@@ -91,7 +92,7 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
 
       <HeatMap 
         currentWeek={currentWeek} 
-        onDayClick={(date, dayEvents, dayTasks) => setSelectedDay({ date, events: dayEvents, completedTasks: dayTasks })}
+        onDayClick={(date, dayEvents, dayTasks, dayAppts) => setSelectedDay({ date, events: dayEvents, completedTasks: dayTasks, appointments: dayAppts })}
         onWeekClick={onNavigateToWeek}
       />
 
@@ -109,8 +110,24 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
             </button>
           )}
 
-          {selectedDay?.events.length === 0 && selectedDay?.completedTasks.length === 0 && (
+          {selectedDay?.events.length === 0 && selectedDay?.completedTasks.length === 0 && selectedDay?.appointments.length === 0 && (
             <p className="text-secondary italic">No activity recorded.</p>
+          )}
+
+          {selectedDay && selectedDay.appointments.length > 0 && (
+            <div>
+              <label>Scheduled Intentions</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                {selectedDay.appointments.map(t => (
+                  <div key={t.id} className="list-item" style={{ padding: 'var(--space-xs) 0' }}>
+                    <div className="text-sm">
+                      <span style={{ color: 'var(--primary)', marginRight: 'var(--space-sm)' }}>◈</span>
+                      <span className={t.isComplete ? 'text-secondary italic line-through' : ''}>{t.title}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
           
           {selectedDay && selectedDay.events.length > 0 && (
