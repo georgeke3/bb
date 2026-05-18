@@ -58,9 +58,20 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
     });
   }, [anniversaryDate, events, flatTasks]);
 
-  const CELL_SIZE = 10;
+  const CELL_SIZE = 14;
   const GAP = 2;
   const COLUMN_WIDTH = CELL_SIZE + GAP;
+
+  const handleTouch = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (target instanceof HTMLElement && target.hasAttribute('data-day-cell')) {
+      const weekIdx = parseInt(target.getAttribute('data-week-idx') || '0');
+      const dayIdx = parseInt(target.getAttribute('data-day-idx') || '0');
+      const dayData = gridData[weekIdx][dayIdx];
+      onDayClick(dayData.date, dayData.events, dayData.completedTasks, dayData.appointments);
+    }
+  };
 
   const monthLabels = useMemo(() => {
     if (!anniversaryDate) return [];
@@ -204,7 +215,12 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
                       return (
                         <div 
                           key={dIndex}
+                          data-day-cell="true"
+                          data-week-idx={idx}
+                          data-day-idx={dIndex}
                           onClick={() => onDayClick(dayData.date, dayData.events, dayData.completedTasks, dayData.appointments)}
+                          onTouchStart={() => onDayClick(dayData.date, dayData.events, dayData.completedTasks, dayData.appointments)}
+                          onTouchMove={handleTouch}
                           style={{ 
                             width: `${CELL_SIZE}px`, 
                             height: `${CELL_SIZE}px`, 
@@ -217,16 +233,18 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
                             alignItems: 'center',
                             justifyContent: 'center',
                             position: 'relative',
-                            zIndex: isToday ? 10 : 1
+                            zIndex: isToday ? 10 : 1,
+                            touchAction: 'none' // Prevent scrolling while sliding
                           }}
                         >
                           {hasAppt && (
                             <div style={{ 
-                              width: '3px', 
-                              height: '3px', 
+                              width: '4px', 
+                              height: '4px', 
                               backgroundColor: 'white', 
                               borderRadius: '50%',
-                              boxShadow: '0 0 2px rgba(0,0,0,0.5)'
+                              boxShadow: '0 0 2px rgba(0,0,0,0.5)',
+                              pointerEvents: 'none'
                             }}></div>
                           )}
                         </div>
