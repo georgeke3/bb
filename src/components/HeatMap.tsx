@@ -194,6 +194,7 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
                     {weekData.map((dayData, dIndex) => {
                       const intensity = dayData.intensity;
                       const hasAppt = dayData.appointments.length > 0;
+                      const isToday = isSameDay(dayData.date, new Date());
                       let color = '#25211f';
                       if (intensity > 0) color = '#4d3b2e';
                       if (intensity > 3) color = '#7d583e';
@@ -210,15 +211,23 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
                             backgroundColor: color, 
                             borderRadius: '1px',
                             cursor: 'pointer',
-                            outline: isCurrent ? '1px solid var(--primary)' : 'none',
+                            outline: isToday ? '1px solid white' : (isCurrent ? '1px solid rgba(255, 140, 66, 0.3)' : 'none'),
                             outlineOffset: '-1px',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            position: 'relative',
+                            zIndex: isToday ? 10 : 1
                           }}
                         >
                           {hasAppt && (
-                            <div style={{ width: '2px', height: '2px', backgroundColor: 'white', borderRadius: '50%' }}></div>
+                            <div style={{ 
+                              width: '3px', 
+                              height: '3px', 
+                              backgroundColor: 'white', 
+                              borderRadius: '50%',
+                              boxShadow: '0 0 2px rgba(0,0,0,0.5)'
+                            }}></div>
                           )}
                         </div>
                       );
