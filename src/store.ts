@@ -17,7 +17,7 @@ interface AppState {
   addTask: (task: Omit<ToDo, 'id' | 'locked' | 'subTasks' | 'parentTaskId'>, parentTaskId?: string) => void;
   updateTask: (id: string, updates: Partial<ToDo>) => void;
   deleteTask: (id: string) => void;
-  completeTask: (id: string) => void;
+  completeTask: (id: string, completedAt?: string) => void;
   splitTask: (parentId: string, newSubTasks: Omit<ToDo, 'id' | 'locked' | 'subTasks' | 'parentTaskId'>[]) => void;
   
   exportData: () => string;
@@ -25,14 +25,14 @@ interface AppState {
   resetData: () => void;
 }
 
-const lockTaskAndChildren = (task: ToDo): ToDo => {
-  const now = new Date().toISOString();
+const lockTaskAndChildren = (task: ToDo, completedAt?: string): ToDo => {
+  const now = completedAt || new Date().toISOString();
   return {
     ...task,
     locked: true,
     isComplete: true,
     completedAt: task.completedAt || now,
-    subTasks: task.subTasks.map(lockTaskAndChildren),
+    subTasks: task.subTasks.map(t => lockTaskAndChildren(t, now)),
   };
 };
 
@@ -116,9 +116,9 @@ export const useStore = create<AppState>()(
         }));
       },
 
-      completeTask: (id) => {
+      completeTask: (id, completedAt) => {
         set((state) => ({
-          tasks: findAndReplaceTask(state.tasks, id, (task) => lockTaskAndChildren(task)),
+          tasks: findAndReplaceTask(state.tasks, id, (task) => lockTaskAndChildren(task, completedAt)),
         }));
       },
 

@@ -5,8 +5,10 @@ interface ModalProps {
   message?: string;
   onConfirm: () => void;
   onCancel: () => void;
+  onAlt?: () => void;
   confirmText?: string;
   cancelText?: string;
+  altText?: string;
   isDanger?: boolean;
   children?: React.ReactNode;
 }
@@ -17,8 +19,10 @@ export default function Modal({
   message, 
   onConfirm, 
   onCancel, 
+  onAlt,
   confirmText = 'Confirm', 
   cancelText = 'Cancel',
+  altText,
   isDanger = false,
   children
 }: ModalProps) {
@@ -49,7 +53,10 @@ export default function Modal({
         <h3 style={{ marginBottom: '1rem' }}>{title}</h3>
         {message && <p style={{ marginBottom: '1.5rem', color: 'var(--accent-color)' }}>{message}</p>}
         {children}
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem', flexWrap: 'wrap' }}>
+          {onAlt && altText && (
+            <button className="btn-secondary" onClick={onAlt} style={{ marginRight: 'auto' }}>{altText}</button>
+          )}
           <button className="btn-secondary" onClick={onCancel}>{cancelText}</button>
           <button 
             className="btn-primary" 

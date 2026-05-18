@@ -5,7 +5,7 @@ import { addWeeks, format, parseISO, endOfWeek, startOfDay } from 'date-fns';
 import Modal from './Modal';
 import { calculateProgress } from '../utils/progressHelpers';
 import { GeminiService } from '../services/gemini';
-import { getAnniversaryDate, getWeekForDate } from '../utils/dateHelpers';
+import { getAnniversaryDate, getWeekForDate, getTrimester } from '../utils/dateHelpers';
 
 interface WeekViewProps {
   currentWeek: number;
@@ -93,7 +93,7 @@ export default function WeekView({ currentWeek, viewingWeek, setViewingWeek, gem
 
   const confirmRecommendations = () => {
     if (!recommendations) return;
-    const selected = recommendations.filter(r => r.selected).map(({ selected, ...rest }) => rest);
+    const selected = recommendations.filter(r => r.selected).map(({ selected: _, ...rest }) => rest);
     selected.forEach(s => addTask({ ...s, isComplete: false }));
     setRecommendations(null);
   };
@@ -146,7 +146,10 @@ export default function WeekView({ currentWeek, viewingWeek, setViewingWeek, gem
           </button>
           
           <div style={{ textAlign: 'center' }}>
-            <h3 className="card-title" style={{ margin: 0, fontSize: '1.1rem' }}>Week {viewingWeek}</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-xs)' }}>
+              <h3 className="card-title" style={{ margin: 0, fontSize: '1.1rem' }}>Week {viewingWeek}</h3>
+              <span className="tag" style={{ fontSize: '0.6rem', opacity: 0.8 }}>T{getTrimester(viewingWeek)}</span>
+            </div>
             <div className="text-xs text-secondary" style={{ marginTop: '2px' }}>{getWeekRange(viewingWeek)}</div>
           </div>
 

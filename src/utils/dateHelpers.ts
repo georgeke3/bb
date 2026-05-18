@@ -37,3 +37,12 @@ export const getWeekForDate = (date: Date, anniversaryDate: Date): number => {
   const daysPassed = differenceInDays(date, anniversaryDate);
   return Math.floor(daysPassed / 7) + 1;
 };
+
+/**
+ * Returns the trimester for a given week number.
+ */
+export const getTrimester = (week: number): 1 | 2 | 3 => {
+  if (week <= 13) return 1;
+  if (week <= 27) return 2;
+  return 3;
+};

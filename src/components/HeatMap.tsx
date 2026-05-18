@@ -2,7 +2,7 @@ import { useMemo, useRef, useEffect } from 'react';
 import { useStore } from '../store';
 import { addWeeks, addDays, format, parseISO, isSameDay, getMonth } from 'date-fns';
 import type { ToDo, ContextEvent } from '../types';
-import { getAnniversaryDate } from '../utils/dateHelpers';
+import { getAnniversaryDate, getTrimester } from '../utils/dateHelpers';
 
 interface HeatMapProps {
   currentWeek: number;
@@ -155,6 +155,9 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
               {gridData.map((weekData, idx) => {
                 const weekNum = idx + 1;
                 const isCurrent = weekNum === currentWeek;
+                const trimester = getTrimester(weekNum);
+                const triColor = trimester === 1 ? '#ff8c42' : trimester === 2 ? '#4cc9f0' : '#7209b7';
+
                 return (
                   <div 
                     key={idx} 
@@ -179,7 +182,8 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
                         fontWeight: 800,
                         padding: '0',
                         borderRadius: '2px',
-                        width: `${CELL_SIZE}px`
+                        width: `${CELL_SIZE}px`,
+                        borderBottom: `2px solid ${triColor}`
                       }}
                     >
                       {weekNum}

@@ -201,10 +201,32 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
   const [splitSuggestions, setSplitSuggestions] = useState<any[] | null>(null);
   
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [isPastMidnight, setIsPastMidnight] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleToggleComplete = () => {
-    if (!task.isComplete) setShowCompleteModal(true);
+    if (!task.isComplete) {
+      const now = new Date();
+      const hours = now.getHours();
+      if (hours >= 0 && hours < 5) {
+        setIsPastMidnight(true);
+      } else {
+        setIsPastMidnight(false);
+      }
+      setShowCompleteModal(true);
+    }
+  };
+
+  const onConfirmComplete = (attributeToYesterday: boolean) => {
+    let completedAt = new Date().toISOString();
+    if (attributeToYesterday) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(23, 59, 59, 999);
+      completedAt = yesterday.toISOString();
+    }
+    completeTask(task.id, completedAt);
+    setShowCompleteModal(false);
   };
 
   const handleSplit = async (e: React.MouseEvent) => {
@@ -225,7 +247,7 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
 
   const confirmSplit = () => {
     if (!splitSuggestions) return;
-    const selected = splitSuggestions.filter(s => s.selected).map(({ selected, ...rest }) => rest);
+    const selected = splitSuggestions.filter(s => s.selected).map(({ selected: _, ...rest }) => rest);
     if (selected.length > 0) {
       splitTask(task.id, selected);
       setIsExpanded(true);
@@ -239,11 +261,14 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
     <div style={{ marginBottom: 'var(--space-md)' }}>
       <Modal 
         isOpen={showCompleteModal}
-        title="Complete Intention?"
-        message="This will lock this path permanently."
-        onConfirm={() => { completeTask(task.id); setShowCompleteModal(false); }}
+        title={isPastMidnight ? "Past Midnight" : "Complete Intention?"}
+        message={isPastMidnight ? "It's early morning. Record this for yesterday?" : "This will lock this path permanently."}
+        onConfirm={() => onConfirmComplete(isPastMidnight)}
         onCancel={() => setShowCompleteModal(false)}
-        confirmText="Complete"
+        onAlt={isPastMidnight ? () => onConfirmComplete(false) : undefined}
+        confirmText={isPastMidnight ? "Yes, Yesterday" : "Complete"}
+        cancelText="Cancel"
+        altText={isPastMidnight ? "No, Today" : undefined}
       />
 
       <Modal 
