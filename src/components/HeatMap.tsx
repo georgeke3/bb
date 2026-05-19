@@ -59,7 +59,7 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
     });
   }, [anniversaryDate, events, flatTasks]);
 
-  const CELL_SIZE = 18;
+  const CELL_SIZE = 20;
   const GAP = 2;
   const COLUMN_WIDTH = CELL_SIZE + GAP;
 
