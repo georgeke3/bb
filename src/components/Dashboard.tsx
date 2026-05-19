@@ -2,9 +2,8 @@ import { useState, useMemo } from 'react';
 import { useStore } from '../store';
 import { GeminiService } from '../services/gemini';
 import ErrorBanner from './ErrorBanner';
-import Modal from './Modal';
 import HeatMap from './HeatMap';
-import { format, differenceInDays, parseISO, subWeeks, startOfDay } from 'date-fns';
+import { format, differenceInDays, parseISO, subWeeks, startOfDay, isSameDay } from 'date-fns';
 import type { ToDo, ContextEvent } from '../types';
 
 interface DashboardProps {
