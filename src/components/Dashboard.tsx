@@ -21,15 +21,28 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
   const [error, setError] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<any[] | null>(null);
   
-  const [selectedDay, setSelectedDay] = useState<{ date: Date, events: ContextEvent[], completedTasks: ToDo[], appointments: ToDo[] } | null>(null);
+  const [activeDay, setActiveDay] = useState<{ date: Date, events: ContextEvent[], completedTasks: ToDo[], appointments: ToDo[] } | null>(null);
 
-  const selectedDayWeek = useMemo(() => {
-    if (!selectedDay || !profile?.birthDate) return 1;
+  // Initialize activeDay to today if not set
+  useMemo(() => {
+    if (!activeDay) {
+      const today = new Date();
+      const dayEvents = events.filter(e => isSameDay(parseISO(e.timestamp), today));
+      const flat = (taskList: ToDo[]): ToDo[] => taskList.reduce((acc: ToDo[], t) => [...acc, t, ...flat(t.subTasks)], []);
+      const allTasks = flat(tasks);
+      const dayTasks = allTasks.filter(t => t.isComplete && t.completedAt && isSameDay(parseISO(t.completedAt), today));
+      const dayAppts = allTasks.filter(t => t.type === 'appointment' && t.specificDate && isSameDay(parseISO(t.specificDate), today));
+      setActiveDay({ date: today, events: dayEvents, completedTasks: dayTasks, appointments: dayAppts });
+    }
+  }, [events, tasks, activeDay]);
+
+  const activeDayWeek = useMemo(() => {
+    if (!activeDay || !profile?.birthDate) return 1;
     const dueDate = parseISO(profile.birthDate);
     const conceptionDate = subWeeks(startOfDay(dueDate), 40);
-    const diff = differenceInDays(startOfDay(selectedDay.date), conceptionDate);
+    const diff = differenceInDays(startOfDay(activeDay.date), conceptionDate);
     return Math.floor(diff / 7) + 1;
-  }, [selectedDay, profile?.birthDate]);
+  }, [activeDay, profile?.birthDate]);
 
   const flatIncomplete = (tasks: any[]): any[] => {
     return tasks.reduce((acc, t) => {
@@ -92,74 +105,72 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
 
       <HeatMap 
         currentWeek={currentWeek} 
-        onDayClick={(date, dayEvents, dayTasks, dayAppts) => setSelectedDay({ date, events: dayEvents, completedTasks: dayTasks, appointments: dayAppts })}
+        onDayClick={(date, dayEvents, dayTasks, dayAppts) => setActiveDay({ date, events: dayEvents, completedTasks: dayTasks, appointments: dayAppts })}
         onWeekClick={onNavigateToWeek}
       />
 
-      <Modal 
-        isOpen={!!selectedDay}
-        title={selectedDay ? format(selectedDay.date, 'EEEE, MMMM do') : ''}
-        onConfirm={() => setSelectedDay(null)}
-        onCancel={() => setSelectedDay(null)}
-        confirmText="Dismiss"
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-          {selectedDay && (
-            <button className="btn-text" onClick={() => { onNavigateToWeek(selectedDayWeek); setSelectedDay(null); }}>
-              View Week {selectedDayWeek} Insights
+      {activeDay && (
+        <div className="card animate-fade-in" style={{ marginTop: '-1rem', borderTopLeftRadius: 0, borderTopRightRadius: 0, borderTop: 'none', background: 'var(--card-bg-elevated)', boxShadow: 'none', border: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+            <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+              {isSameDay(activeDay.date, new Date()) ? 'Today · ' : ''}
+              {format(activeDay.date, 'EEEE, MMM do')}
+            </h4>
+            <button className="btn-text" style={{ fontSize: '0.7rem' }} onClick={() => onNavigateToWeek(activeDayWeek)}>
+              View Week {activeDayWeek} →
             </button>
-          )}
+          </div>
 
-          {selectedDay?.events.length === 0 && selectedDay?.completedTasks.length === 0 && selectedDay?.appointments.length === 0 && (
-            <p className="text-secondary italic">No activity recorded.</p>
-          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            {activeDay.events.length === 0 && activeDay.completedTasks.length === 0 && activeDay.appointments.length === 0 && (
+              <p className="text-secondary italic" style={{ fontSize: '0.8rem', margin: 0 }}>No records for this day.</p>
+            )}
 
-          {selectedDay && selectedDay.appointments.length > 0 && (
-            <div>
-              <label>Scheduled Intentions</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
-                {selectedDay.appointments.map(t => (
-                  <div key={t.id} className="list-item" style={{ padding: 'var(--space-xs) 0' }}>
-                    <div className="text-sm">
-                      <span style={{ color: 'var(--primary)', marginRight: 'var(--space-sm)' }}>◈</span>
+            {activeDay.appointments.length > 0 && (
+              <div>
+                <label style={{ fontSize: '0.6rem', marginBottom: '4px' }}>Scheduled</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {activeDay.appointments.map(t => (
+                    <div key={t.id} className="text-sm" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span style={{ color: 'var(--primary)' }}>◈</span>
                       <span className={t.isComplete ? 'text-secondary italic line-through' : ''}>{t.title}</span>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-          
-          {selectedDay && selectedDay.events.length > 0 && (
-            <div>
-              <label>Daily Journal</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-                {selectedDay.events.map(e => (
-                  <div key={e.id} className="card" style={{ padding: 'var(--space-md)', marginBottom: 0, borderRadius: 'var(--radius-md)', background: 'var(--card-bg-elevated)' }}>
-                    <div className="font-bold">{e.aiSummary}</div>
-                    <div className="text-xs text-secondary italic" style={{ marginTop: 'var(--space-xs)' }}>"{e.rawInput}"</div>
-                  </div>
-                ))}
+            )}
+            
+            {activeDay.events.length > 0 && (
+              <div>
+                <label style={{ fontSize: '0.6rem', marginBottom: '4px' }}>Journal</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {activeDay.events.map(e => (
+                    <div key={e.id} style={{ borderLeft: '2px solid var(--border)', paddingLeft: '8px' }}>
+                      <div className="text-sm font-bold">{e.aiSummary}</div>
+                      <div className="text-xs text-secondary italic" style={{ marginTop: '2px' }}>"{e.rawInput}"</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {selectedDay && selectedDay.completedTasks.length > 0 && (
-            <div>
-              <label>Completed Acts</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
-                {selectedDay.completedTasks.map(t => (
-                  <div key={t.id} className="list-item" style={{ padding: 'var(--space-xs) 0' }}>
-                    <div className="text-sm"><span style={{ color: 'var(--primary)', marginRight: 'var(--space-sm)' }}>✦</span>{t.title}</div>
-                  </div>
-                ))}
+            {activeDay.completedTasks.length > 0 && (
+              <div>
+                <label style={{ fontSize: '0.6rem', marginBottom: '4px' }}>Completed</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {activeDay.completedTasks.map(t => (
+                    <div key={t.id} className="tag" style={{ fontSize: '0.65rem', background: 'rgba(76, 201, 240, 0.1)', color: 'var(--primary)' }}>
+                      ✦ {t.title}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </Modal>
+      )}
 
-      <div className="card">
+      <div className="card" style={{ marginTop: 'var(--space-lg)' }}>
         <h3 className="card-title" style={{ marginBottom: 'var(--space-sm)' }}>How is she today?</h3>
         <p className="text-xs text-secondary" style={{ marginBottom: 'var(--space-md)' }}>
           Describe a symptom, a mood, or a small milestone.
