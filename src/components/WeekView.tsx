@@ -6,6 +6,7 @@ import Modal from './Modal';
 import { calculateProgress } from '../utils/progressHelpers';
 import { GeminiService } from '../services/gemini';
 import { getAnniversaryDate, getWeekForDate, getTrimester } from '../utils/dateHelpers';
+import { TaskForm } from './ToDoView';
 
 interface WeekViewProps {
   currentWeek: number;
@@ -15,10 +16,11 @@ interface WeekViewProps {
 }
 
 export default function WeekView({ currentWeek, viewingWeek, setViewingWeek, geminiService }: WeekViewProps) {
-  const { tasks, events, profile, deleteEvent, addTask } = useStore();
+  const { tasks, events, profile, deleteEvent, addTask, updateTask } = useStore();
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
   const [isNudging, setIsNudging] = useState(false);
   const [recommendations, setRecommendations] = useState<any[] | null>(null);
+  const [editingTask, setEditingTask] = useState<ToDo | null>(null);
 
   const anniversaryDate = useMemo(() => {
     if (!profile?.birthDate) return null;
@@ -114,6 +116,22 @@ export default function WeekView({ currentWeek, viewingWeek, setViewingWeek, gem
         isDanger={true}
       />
 
+      <Modal
+        isOpen={!!editingTask}
+        title="Edit Intention"
+        onConfirm={() => {}}
+        onCancel={() => setEditingTask(null)}
+        confirmText=""
+      >
+        {editingTask && (
+          <TaskForm 
+            initialData={editingTask} 
+            onSave={(data) => { updateTask(editingTask.id, data); setEditingTask(null); }} 
+            onCancel={() => setEditingTask(null)}
+          />
+        )}
+      </Modal>
+
       <div className="card">
         <label>Journey Alignment</label>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-xs)', marginTop: 'var(--space-sm)' }}>
@@ -173,10 +191,11 @@ export default function WeekView({ currentWeek, viewingWeek, setViewingWeek, gem
                 {weekAppts.map(a => (
                   <div key={a.id} className="card" style={{ padding: 'var(--space-md)', marginBottom: 0, borderRadius: 'var(--radius-md)', background: 'rgba(255, 140, 66, 0.05)', border: '1px solid rgba(255, 140, 66, 0.2)', display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
                     <span style={{ fontSize: '1.2rem' }}>◈</span>
-                    <div>
+                    <div style={{ flex: 1 }}>
                       <div className="font-bold text-sm">{a.title}</div>
                       <div className="text-xs text-secondary" style={{ marginTop: '2px' }}>{a.specificDate ? format(parseISO(a.specificDate), 'EEEE, MMM d') : ''}</div>
                     </div>
+                    <button className="btn-text" style={{ fontSize: '0.7rem' }} onClick={() => setEditingTask(a)}>Edit</button>
                   </div>
                 ))}
               </div>
@@ -189,7 +208,8 @@ export default function WeekView({ currentWeek, viewingWeek, setViewingWeek, gem
               {weekTasks.map(t => (
                 <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', padding: 'var(--space-sm) 0' }}>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: t.isComplete ? 'var(--success)' : (t.isCritical ? 'var(--primary)' : 'var(--text-muted)') }}></div>
-                  <span className={`text-sm ${t.isComplete ? 'text-secondary italic' : 'text-primary'}`} style={{ textDecoration: t.isComplete ? 'line-through' : 'none' }}>{t.title}</span>
+                  <span className={`text-sm ${t.isComplete ? 'text-secondary italic' : 'text-primary'}`} style={{ textDecoration: t.isComplete ? 'line-through' : 'none', flex: 1 }}>{t.title}</span>
+                  <button className="btn-text" style={{ fontSize: '0.6rem' }} onClick={() => setEditingTask(t)}>✎</button>
                 </div>
               ))}
               {weekTasks.length === 0 && <div className="text-sm text-secondary italic">No intentions scheduled.</div>}
