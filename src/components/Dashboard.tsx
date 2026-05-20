@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store';
 import { GeminiService } from '../services/gemini';
 import ErrorBanner from './ErrorBanner';
@@ -23,7 +23,7 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
   const [activeDay, setActiveDay] = useState<{ date: Date, events: ContextEvent[], completedTasks: ToDo[], appointments: ToDo[] } | null>(null);
 
   // Initialize activeDay to today if not set
-  useMemo(() => {
+  useEffect(() => {
     if (!activeDay) {
       const today = new Date();
       const dayEvents = events.filter(e => isSameDay(parseISO(e.timestamp), today));
