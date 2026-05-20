@@ -12,6 +12,76 @@ interface ToDoViewProps {
 
 type SubTab = 'critical' | 'nice' | 'complete';
 
+export function TaskForm({ onSave, onCancel, initialData, initialWeek, initialCritical }: { onSave: (data: any) => void, onCancel?: () => void, initialData?: ToDo, initialWeek?: number, initialCritical?: boolean }) {
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [desc, setDesc] = useState(initialData?.description || '');
+  const [isCritical, setIsCritical] = useState(initialData?.isCritical ?? initialCritical ?? true);
+  const [minWeek, setMinWeek] = useState<number | undefined>(initialData?.minWeek ?? initialWeek);
+  const [specificDate, setSpecificDate] = useState(initialData?.specificDate || '');
+  const [type, setType] = useState<'task' | 'appointment'>(initialData?.type || 'task');
+
+  const handleWeekChange = (val: string) => {
+    if (val === '') {
+      setMinWeek(undefined);
+      return;
+    }
+    const num = parseInt(val);
+    if (!isNaN(num)) setMinWeek(Math.max(1, Math.min(42, num)));
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+        <button className={type === 'task' ? 'btn-primary' : 'btn-secondary'} style={{ flex: 1, padding: 'var(--space-sm)' }} onClick={() => setType('task')}>Task</button>
+        <button className={type === 'appointment' ? 'btn-primary' : 'btn-secondary'} style={{ flex: 1, padding: 'var(--space-sm)' }} onClick={() => setType('appointment')}>Appointment</button>
+      </div>
+
+      <div>
+        <label>Objective</label>
+        <input type="text" placeholder="What must be done?" value={title} onChange={e => setTitle(e.target.value)} />
+      </div>
+      
+      <div>
+        <label>Context</label>
+        <textarea placeholder="Additional details..." value={desc} onChange={e => setDesc(e.target.value)} style={{ minHeight: '100px' }} />
+      </div>
+      
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-md)', alignItems: 'center' }}>
+        {type === 'task' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+            <label style={{ margin: 0 }}>Start Wk (Optional)</label>
+            <input 
+              type="number" 
+              placeholder="--"
+              min="1" max="42" 
+              value={minWeek ?? ''} 
+              onChange={e => handleWeekChange(e.target.value)} 
+              style={{ width: '70px', padding: '0.5rem' }} 
+            />
+          </div>
+        )}
+        {type === 'appointment' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+            <label style={{ margin: 0 }}>Date</label>
+            <input type="date" value={specificDate} onChange={e => setSpecificDate(e.target.value)} style={{ width: 'auto', padding: '0.5rem' }} />
+          </div>
+        )}
+        <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', cursor: 'pointer', margin: 0 }}>
+          <input type="checkbox" checked={isCritical} onChange={e => setIsCritical(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+          Critical
+        </label>
+      </div>
+      
+      <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
+        {onCancel && <button className="btn-secondary" style={{ flex: 1 }} onClick={onCancel}>Cancel</button>}
+        <button className="btn-primary" style={{ flex: 2 }} onClick={() => onSave({ title, description: desc, isCritical, minWeek, specificDate, type })} disabled={!title}>
+          {initialData ? 'Update Intention' : 'Seal Intention'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ToDoView({ currentWeek, geminiService }: ToDoViewProps) {
   const { tasks, addTask } = useStore();
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('critical');
@@ -19,7 +89,7 @@ export default function ToDoView({ currentWeek, geminiService }: ToDoViewProps) 
   const [error, setError] = useState<string | null>(null);
 
   const processedTasks = useMemo(() => {
-    let filtered = [...tasks];
+    let filtered = tasks.filter(t => t.parentTaskId === null);
     
     if (activeSubTab === 'complete') {
       filtered = filtered.filter(t => t.isComplete);
@@ -118,76 +188,6 @@ export default function ToDoView({ currentWeek, geminiService }: ToDoViewProps) 
           initialCritical={activeSubTab === 'critical'}
         />
       </Modal>
-    </div>
-  );
-}
-
-function TaskForm({ onSave, onCancel, initialData, initialWeek, initialCritical }: { onSave: (data: any) => void, onCancel?: () => void, initialData?: ToDo, initialWeek?: number, initialCritical?: boolean }) {
-  const [title, setTitle] = useState(initialData?.title || '');
-  const [desc, setDesc] = useState(initialData?.description || '');
-  const [isCritical, setIsCritical] = useState(initialData?.isCritical ?? initialCritical ?? true);
-  const [minWeek, setMinWeek] = useState<number | undefined>(initialData?.minWeek ?? initialWeek);
-  const [specificDate, setSpecificDate] = useState(initialData?.specificDate || '');
-  const [type, setType] = useState<'task' | 'appointment'>(initialData?.type || 'task');
-
-  const handleWeekChange = (val: string) => {
-    if (val === '') {
-      setMinWeek(undefined);
-      return;
-    }
-    const num = parseInt(val);
-    if (!isNaN(num)) setMinWeek(Math.max(1, Math.min(42, num)));
-  };
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-      <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-        <button className={type === 'task' ? 'btn-primary' : 'btn-secondary'} style={{ flex: 1, padding: 'var(--space-sm)' }} onClick={() => setType('task')}>Task</button>
-        <button className={type === 'appointment' ? 'btn-primary' : 'btn-secondary'} style={{ flex: 1, padding: 'var(--space-sm)' }} onClick={() => setType('appointment')}>Appointment</button>
-      </div>
-
-      <div>
-        <label>Objective</label>
-        <input type="text" placeholder="What must be done?" value={title} onChange={e => setTitle(e.target.value)} />
-      </div>
-      
-      <div>
-        <label>Context</label>
-        <textarea placeholder="Additional details..." value={desc} onChange={e => setDesc(e.target.value)} style={{ minHeight: '100px' }} />
-      </div>
-      
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-md)', alignItems: 'center' }}>
-        {type === 'task' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-            <label style={{ margin: 0 }}>Start Wk (Optional)</label>
-            <input 
-              type="number" 
-              placeholder="--"
-              min="1" max="42" 
-              value={minWeek ?? ''} 
-              onChange={e => handleWeekChange(e.target.value)} 
-              style={{ width: '70px', padding: '0.5rem' }} 
-            />
-          </div>
-        )}
-        {type === 'appointment' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-            <label style={{ margin: 0 }}>Date</label>
-            <input type="date" value={specificDate} onChange={e => setSpecificDate(e.target.value)} style={{ width: 'auto', padding: '0.5rem' }} />
-          </div>
-        )}
-        <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', cursor: 'pointer', margin: 0 }}>
-          <input type="checkbox" checked={isCritical} onChange={e => setIsCritical(e.target.checked)} style={{ width: '16px', height: '16px' }} />
-          Critical
-        </label>
-      </div>
-      
-      <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
-        {onCancel && <button className="btn-secondary" style={{ flex: 1 }} onClick={onCancel}>Cancel</button>}
-        <button className="btn-primary" style={{ flex: 2 }} onClick={() => onSave({ title, description: desc, isCritical, minWeek, specificDate, type })} disabled={!title}>
-          {initialData ? 'Update Intention' : 'Seal Intention'}
-        </button>
-      </div>
     </div>
   );
 }

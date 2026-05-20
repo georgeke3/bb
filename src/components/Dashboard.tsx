@@ -3,8 +3,11 @@ import { useStore } from '../store';
 import { GeminiService } from '../services/gemini';
 import ErrorBanner from './ErrorBanner';
 import HeatMap from './HeatMap';
-import { format, differenceInDays, parseISO, subWeeks, startOfDay, isSameDay } from 'date-fns';
+import Modal from './Modal';
+import { format, parseISO, isSameDay } from 'date-fns';
 import type { ToDo, ContextEvent } from '../types';
+import { getAnniversaryDate, getWeekForDate } from '../utils/dateHelpers';
+import { TaskForm } from './ToDoView';
 
 interface DashboardProps {
   currentWeek: number;
@@ -13,7 +16,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek }: DashboardProps) {
-  const { tasks, events, addEvent, addTask, profile } = useStore();
+  const { tasks, events, addEvent, addTask, updateTask, profile } = useStore();
   const [rawInput, setRawInput] = useState('');
   const [isParsing, setIsParsing] = useState(false);
   const [isNudging, setIsNudging] = useState(false);
@@ -21,6 +24,7 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
   const [recommendations, setRecommendations] = useState<any[] | null>(null);
   
   const [activeDay, setActiveDay] = useState<{ date: Date, events: ContextEvent[], completedTasks: ToDo[], appointments: ToDo[] } | null>(null);
+  const [editingTask, setEditingTask] = useState<ToDo | null>(null);
 
   // Initialize activeDay to today if not set
   useEffect(() => {
@@ -37,14 +41,12 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
 
   const activeDayWeek = useMemo(() => {
     if (!activeDay || !profile?.birthDate) return 1;
-    const dueDate = parseISO(profile.birthDate);
-    const conceptionDate = subWeeks(startOfDay(dueDate), 40);
-    const diff = differenceInDays(startOfDay(activeDay.date), conceptionDate);
-    return Math.floor(diff / 7) + 1;
+    const anniversaryDate = getAnniversaryDate(profile.birthDate);
+    return getWeekForDate(activeDay.date, anniversaryDate);
   }, [activeDay, profile?.birthDate]);
 
-  const flatIncomplete = (tasks: any[]): any[] => {
-    return tasks.reduce((acc, t) => {
+  const flatIncomplete = (taskList: any[]): any[] => {
+    return taskList.reduce((acc, t) => {
       if (!t.isComplete) acc.push(t);
       acc.push(...flatIncomplete(t.subTasks));
       return acc;
@@ -108,6 +110,22 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
         onWeekClick={onNavigateToWeek}
       />
 
+      <Modal
+        isOpen={!!editingTask}
+        title="Edit Intention"
+        onConfirm={() => {}}
+        onCancel={() => setEditingTask(null)}
+        confirmText=""
+      >
+        {editingTask && (
+          <TaskForm 
+            initialData={editingTask} 
+            onSave={(data) => { updateTask(editingTask.id, data); setEditingTask(null); }} 
+            onCancel={() => setEditingTask(null)}
+          />
+        )}
+      </Modal>
+
       {activeDay && (
         <div className="card animate-fade-in" style={{ marginTop: '-1rem', borderTopLeftRadius: 0, borderTopRightRadius: 0, borderTop: 'none', background: 'var(--card-bg-elevated)', boxShadow: 'none', border: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
@@ -130,9 +148,12 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
                 <label style={{ fontSize: '0.6rem', marginBottom: '4px' }}>Scheduled</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   {activeDay.appointments.map(t => (
-                    <div key={t.id} className="text-sm" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ color: 'var(--primary)' }}>◈</span>
-                      <span className={t.isComplete ? 'text-secondary italic line-through' : ''}>{t.title}</span>
+                    <div key={t.id} className="text-sm" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <span style={{ color: 'var(--primary)' }}>◈</span>
+                        <span className={t.isComplete ? 'text-secondary italic line-through' : ''}>{t.title}</span>
+                      </div>
+                      <button className="btn-text" style={{ fontSize: '0.6rem' }} onClick={() => setEditingTask(t)}>Edit</button>
                     </div>
                   ))}
                 </div>
@@ -144,9 +165,11 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
                 <label style={{ fontSize: '0.6rem', marginBottom: '4px' }}>Journal</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {activeDay.events.map(e => (
-                    <div key={e.id} style={{ borderLeft: '2px solid var(--border)', paddingLeft: '8px' }}>
-                      <div className="text-sm font-bold">{e.aiSummary}</div>
-                      <div className="text-xs text-secondary italic" style={{ marginTop: '2px' }}>"{e.rawInput}"</div>
+                    <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ borderLeft: '2px solid var(--border)', paddingLeft: '8px' }}>
+                        <div className="text-sm font-bold">{e.aiSummary}</div>
+                        <div className="text-xs text-secondary italic" style={{ marginTop: '2px' }}>"{e.rawInput}"</div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -158,8 +181,11 @@ export default function Dashboard({ currentWeek, geminiService, onNavigateToWeek
                 <label style={{ fontSize: '0.6rem', marginBottom: '4px' }}>Completed</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                   {activeDay.completedTasks.map(t => (
-                    <div key={t.id} className="tag" style={{ fontSize: '0.65rem', background: 'rgba(76, 201, 240, 0.1)', color: 'var(--primary)' }}>
-                      ✦ {t.title}
+                    <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div className="tag" style={{ fontSize: '0.65rem', background: 'rgba(76, 201, 240, 0.1)', color: 'var(--primary)' }}>
+                        ✦ {t.title}
+                      </div>
+                      <button className="btn-text" style={{ fontSize: '0.6rem', padding: '2px' }} onClick={() => setEditingTask(t)}>✎</button>
                     </div>
                   ))}
                 </div>
