@@ -280,6 +280,7 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
         onCancel={() => setShowDeleteModal(false)}
         confirmText="Delete"
         isDanger={true}
+        zIndex={3000}
       />
 
       {/* Detail & Edit Modal */}
@@ -326,7 +327,11 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
             type="checkbox" 
             checked={task.isComplete} 
             disabled={task.locked}
-            onChange={(e) => { e.stopPropagation(); handleToggleComplete(); }}
+            onChange={(e) => { 
+              e.stopPropagation(); 
+              handleToggleComplete(); 
+            }}
+            onClick={(e) => e.stopPropagation()}
             style={{ width: '20px', height: '20px', marginTop: '2px', cursor: 'pointer' }}
           />
           <div className="todo-text-main">

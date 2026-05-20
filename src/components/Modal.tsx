@@ -10,6 +10,7 @@ interface ModalProps {
   cancelText?: string;
   altText?: string;
   isDanger?: boolean;
+  zIndex?: number;
   children?: React.ReactNode;
 }
 
@@ -24,6 +25,7 @@ export default function Modal({
   cancelText = 'Cancel',
   altText,
   isDanger = false,
+  zIndex = 2000,
   children
 }: ModalProps) {
   if (!isOpen) return null;
@@ -39,7 +41,7 @@ export default function Modal({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 2000, /* Above everything */
+      zIndex: zIndex,
       padding: '1rem'
     }}>
       <div className="card" style={{ 
