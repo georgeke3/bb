@@ -14,6 +14,8 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
   const { profile, events, tasks } = useStore();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
+  const [touchPos, setTouchPos] = useState<{ x: number, y: number } | null>(null);
+  const touchTimer = useRef<number | null>(null);
 
   const anniversaryDate = useMemo(() => {
     if (!profile?.birthDate) return null;
@@ -66,17 +68,38 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
   const handleTouch = (e: React.TouchEvent) => {
     const touch = e.touches[0];
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    
     if (target instanceof HTMLElement && target.hasAttribute('data-day-cell')) {
       const weekIdx = parseInt(target.getAttribute('data-week-idx') || '0');
       const dayIdx = parseInt(target.getAttribute('data-day-idx') || '0');
       const dayData = gridData[weekIdx][dayIdx];
+      
+      setTouchPos({ x: touch.clientX, y: touch.clientY });
       setHoveredDay(dayData.date.toISOString());
       onDayClick(dayData.date, dayData.events, dayData.completedTasks, dayData.appointments);
     }
   };
 
+  const handleTouchStart = (e: React.TouchEvent, dayData: any) => {
+    const touch = e.touches[0];
+    const x = touch.clientX;
+    const y = touch.clientY;
+    
+    // Short delay to distinguish from a quick tap or scroll
+    touchTimer.current = window.setTimeout(() => {
+      setTouchPos({ x, y });
+      setHoveredDay(dayData.date.toISOString());
+      onDayClick(dayData.date, dayData.events, dayData.completedTasks, dayData.appointments);
+    }, 150);
+  };
+
   const handleTouchEnd = () => {
+    if (touchTimer.current) {
+      window.clearTimeout(touchTimer.current);
+      touchTimer.current = null;
+    }
     setHoveredDay(null);
+    setTouchPos(null);
   };
 
   const monthLabels = useMemo(() => {
@@ -118,8 +141,63 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
   if (!anniversaryDate) return null;
 
   return (
-    <div className="heatmap-container" style={{ margin: '0 0 2rem 0' }}>
+    <div className="heatmap-container" style={{ margin: '0 0 2rem 0', position: 'relative' }}>
       <label style={{ marginLeft: 'var(--space-xs)', marginBottom: 'var(--space-sm)', display: 'block' }}>Story Map</label>
+
+      {/* Magnifying Glass Preview */}
+      {hoveredDay && touchPos && (
+        <div style={{
+          position: 'fixed',
+          left: touchPos.x,
+          top: touchPos.y - 70, // Position higher above the finger
+          transform: 'translateX(-50%)',
+          width: '60px',
+          height: '60px',
+          background: 'var(--card-bg-elevated)',
+          border: '2px solid var(--primary)',
+          borderRadius: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+          zIndex: 9999,
+          pointerEvents: 'none'
+        }}>
+          {(() => {
+            const date = parseISO(hoveredDay);
+            // Re-calculating dayData inline for the preview
+            const weekIdx = gridData.findIndex(w => w.some(d => isSameDay(d.date, date)));
+            const dIndex = gridData[weekIdx]?.findIndex(d => isSameDay(d.date, date));
+            const dayData = gridData[weekIdx]?.[dIndex];
+            if (!dayData) return null;
+
+            const intensity = dayData.intensity;
+            const hasAppt = dayData.appointments.length > 0;
+            let color = '#25211f';
+            if (intensity > 0) color = '#4d3b2e';
+            if (intensity > 3) color = '#7d583e';
+            if (intensity > 6) color = '#b37e4c';
+            if (intensity > 10) color = 'var(--primary)';
+
+            return (
+              <div style={{ 
+                width: '36px', 
+                height: '36px', 
+                backgroundColor: color, 
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                outline: isSameDay(date, new Date()) ? '2px solid white' : 'none',
+                boxShadow: 'inset 0 0 10px rgba(0,0,0,0.3)'
+              }}>
+                {hasAppt && <div style={{ width: '8px', height: '8px', backgroundColor: 'white', borderRadius: '50%', boxShadow: '0 0 4px rgba(0,0,0,0.5)' }}></div>}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
       <div 
         ref={scrollRef}
         style={{ 
@@ -214,7 +292,6 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
                       const intensity = dayData.intensity;
                       const hasAppt = dayData.appointments.length > 0;
                       const isToday = isSameDay(dayData.date, new Date());
-                      const isHovered = hoveredDay === dayData.date.toISOString();
                       
                       let color = '#25211f';
                       if (intensity > 0) color = '#4d3b2e';
@@ -229,10 +306,7 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
                           data-week-idx={idx}
                           data-day-idx={dIndex}
                           onClick={() => onDayClick(dayData.date, dayData.events, dayData.completedTasks, dayData.appointments)}
-                          onTouchStart={() => {
-                            setHoveredDay(dayData.date.toISOString());
-                            onDayClick(dayData.date, dayData.events, dayData.completedTasks, dayData.appointments);
-                          }}
+                          onTouchStart={(e) => handleTouchStart(e, dayData)}
                           onTouchMove={handleTouch}
                           onTouchEnd={handleTouchEnd}
                           onMouseEnter={() => setHoveredDay(dayData.date.toISOString())}
@@ -249,11 +323,8 @@ export default function HeatMap({ currentWeek, onDayClick, onWeekClick }: HeatMa
                             alignItems: 'center',
                             justifyContent: 'center',
                             position: 'relative',
-                            zIndex: isHovered || isToday ? 100 : 1,
-                            touchAction: 'none',
-                            transition: 'transform 0.1s ease-out',
-                            transform: isHovered ? 'scale(1.8)' : 'scale(1)',
-                            boxShadow: isHovered ? '0 4px 12px rgba(0,0,0,0.5)' : 'none'
+                            zIndex: isToday ? 10 : 1,
+                            touchAction: 'none'
                           }}
                         >
                           {hasAppt && (
