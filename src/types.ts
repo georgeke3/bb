@@ -18,7 +18,7 @@ export interface ToDo {
   id: string;
   title: string;
   description: string;
-  priority: 'high' | 'mid' | 'low';
+  priority: 'high' | 'mid' | 'low' | 'wishlist';
   isComplete: boolean;
   locked: boolean;
   minWeek?: number; // Renamed and optional

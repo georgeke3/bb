@@ -12,10 +12,10 @@ interface ToDoViewProps {
 
 type SubTab = 'critical' | 'nice' | 'complete';
 
-export function TaskForm({ onSave, onCancel, initialData, initialWeek, initialPriority }: { onSave: (data: any) => void, onCancel?: () => void, initialData?: ToDo, initialWeek?: number, initialPriority?: 'high' | 'mid' | 'low' }) {
+export function TaskForm({ onSave, onCancel, initialData, initialWeek, initialPriority }: { onSave: (data: any) => void, onCancel?: () => void, initialData?: ToDo, initialWeek?: number, initialPriority?: 'high' | 'mid' | 'low' | 'wishlist' }) {
   const [title, setTitle] = useState(initialData?.title || '');
   const [desc, setDesc] = useState(initialData?.description || '');
-  const [priority, setPriority] = useState<'high' | 'mid' | 'low'>(initialData?.priority || initialPriority || 'mid');
+  const [priority, setPriority] = useState<'high' | 'mid' | 'low' | 'wishlist'>(initialData?.priority || initialPriority || 'mid');
   const [minWeek, setMinWeek] = useState<number | undefined>(initialData?.minWeek ?? initialWeek);
   const [specificDate, setSpecificDate] = useState(initialData?.specificDate || '');
   const [type, setType] = useState<'task' | 'appointment'>(initialData?.type || 'task');
@@ -48,15 +48,17 @@ export function TaskForm({ onSave, onCancel, initialData, initialWeek, initialPr
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
         <label>Priority</label>
-        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-          {(['high', 'mid', 'low'] as const).map(p => (
+        <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+          {(['high', 'mid', 'low', 'wishlist'] as const).map(p => (
             <button 
               key={p} 
               className={priority === p ? 'btn-primary' : 'btn-secondary'} 
               style={{ 
-                flex: 1, 
+                flex: '1 1 40%', 
                 textTransform: 'capitalize',
-                background: priority === p ? (p === 'high' ? 'var(--critical)' : p === 'mid' ? 'var(--primary)' : 'var(--text-muted)') : ''
+                fontSize: '0.75rem',
+                padding: 'var(--space-sm)',
+                background: priority === p ? (p === 'high' ? 'var(--critical)' : p === 'mid' ? 'var(--primary)' : p === 'low' ? '#7d583e' : '#666') : ''
               }} 
               onClick={() => setPriority(p)}
             >
@@ -133,13 +135,13 @@ export default function ToDoView({ currentWeek, geminiService }: ToDoViewProps) 
     } else {
       filtered = filtered.filter(t => !t.isComplete);
       if (activeSubTab === 'critical') {
-        filtered = filtered.filter(t => t.priority === 'high');
+        filtered = filtered.filter(t => t.priority !== 'wishlist');
       } else if (activeSubTab === 'nice') {
-        filtered = filtered.filter(t => t.priority !== 'high');
+        filtered = filtered.filter(t => t.priority === 'wishlist');
       }
     }
 
-    const prioValue = { high: 3, mid: 2, low: 1 };
+    const prioValue = { high: 4, mid: 3, low: 2, wishlist: 1 };
 
     return filtered.sort((a, b) => {
       const pA = prioValue[a.priority];
@@ -193,7 +195,7 @@ export default function ToDoView({ currentWeek, geminiService }: ToDoViewProps) 
                 }}
                 onClick={() => setActiveSubTab(tab)}
               >
-                {tab === 'critical' ? 'High' : tab === 'nice' ? 'Mid/Low' : 'Done'}
+                {tab === 'critical' ? 'Project' : tab === 'nice' ? 'Wishlist' : 'Done'}
               </button>
             ))}
           </div>
@@ -248,7 +250,7 @@ export default function ToDoView({ currentWeek, geminiService }: ToDoViewProps) 
           }} 
           onCancel={() => setShowAddModal(false)}
           initialWeek={currentWeek}
-          initialPriority={activeSubTab === 'critical' ? 'high' : 'mid'}
+          initialPriority={activeSubTab === 'critical' ? 'mid' : 'wishlist'}
         />
       </Modal>
     </div>
@@ -334,7 +336,7 @@ function ToDoItem({ task, currentWeek, geminiService, setError, isFlat, breadcru
 
   const potentialParents = useMemo(() => getAllPotentialParents(tasks, task.id), [tasks, task.id]);
 
-  const priorityColor = task.priority === 'high' ? 'var(--critical)' : task.priority === 'mid' ? 'var(--primary)' : 'var(--text-muted)';
+  const priorityColor = task.priority === 'high' ? 'var(--critical)' : task.priority === 'mid' ? 'var(--primary)' : task.priority === 'low' ? '#7d583e' : '#666';
 
   return (
     <div style={{ marginBottom: 'var(--space-md)' }}>
@@ -377,7 +379,7 @@ function ToDoItem({ task, currentWeek, geminiService, setError, isFlat, breadcru
           }} 
           onCancel={() => setIsAddingSubtask(false)}
           initialWeek={task.minWeek || currentWeek}
-          initialPriority={task.priority}
+          initialPriority={task.priority === 'wishlist' ? 'wishlist' : task.priority}
         />
       </Modal>
 
