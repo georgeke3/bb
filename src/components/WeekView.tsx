@@ -207,7 +207,12 @@ export default function WeekView({ currentWeek, viewingWeek, setViewingWeek, gem
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
               {weekTasks.map(t => (
                 <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', padding: 'var(--space-sm) 0' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: t.isComplete ? 'var(--success)' : (t.isCritical ? 'var(--primary)' : 'var(--text-muted)') }}></div>
+                  <div style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    background: t.isComplete ? 'var(--success)' : (t.priority === 'high' ? 'var(--critical)' : t.priority === 'mid' ? 'var(--primary)' : 'var(--text-muted)') 
+                  }}></div>
                   <span className={`text-sm ${t.isComplete ? 'text-secondary italic' : 'text-primary'}`} style={{ textDecoration: t.isComplete ? 'line-through' : 'none', flex: 1 }}>{t.title}</span>
                   <button className="btn-text" style={{ fontSize: '0.6rem' }} onClick={() => setEditingTask(t)}>✎</button>
                 </div>

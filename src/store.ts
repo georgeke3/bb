@@ -19,6 +19,7 @@ interface AppState {
   deleteTask: (id: string) => void;
   completeTask: (id: string, completedAt?: string) => void;
   splitTask: (parentId: string, newSubTasks: Omit<ToDo, 'id' | 'locked' | 'subTasks' | 'parentTaskId'>[]) => void;
+  moveTask: (taskId: string, newParentId: string | null) => void;
   
   exportData: () => string;
   importData: (jsonData: string) => void;
@@ -64,6 +65,15 @@ const findAndAddTask = (tasks: ToDo[], parentId: string, newTask: ToDo): ToDo[] 
       subTasks: findAndAddTask(task.subTasks, parentId, newTask),
     };
   });
+};
+
+const findTask = (tasks: ToDo[], id: string): ToDo | null => {
+  for (const task of tasks) {
+    if (task.id === id) return task;
+    const found = findTask(task.subTasks, id);
+    if (found) return found;
+  }
+  return null;
 };
 
 export const useStore = create<AppState>()(
@@ -139,6 +149,25 @@ export const useStore = create<AppState>()(
             };
           }),
         }));
+      },
+
+      moveTask: (taskId, newParentId) => {
+        set((state) => {
+          const taskToMove = findTask(state.tasks, taskId);
+          if (!taskToMove) return state;
+
+          // 1. Remove task from its current position
+          const tasksWithoutTarget = findAndReplaceTask(state.tasks, taskId, () => null);
+
+          // 2. Insert into new parent or root
+          const updatedTask = { ...taskToMove, parentTaskId: newParentId };
+          
+          if (newParentId === null) {
+            return { tasks: [...tasksWithoutTarget, updatedTask] };
+          } else {
+            return { tasks: findAndAddTask(tasksWithoutTarget, newParentId, updatedTask) };
+          }
+        });
       },
 
       exportData: () => {

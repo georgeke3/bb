@@ -12,10 +12,10 @@ interface ToDoViewProps {
 
 type SubTab = 'critical' | 'nice' | 'complete';
 
-export function TaskForm({ onSave, onCancel, initialData, initialWeek, initialCritical }: { onSave: (data: any) => void, onCancel?: () => void, initialData?: ToDo, initialWeek?: number, initialCritical?: boolean }) {
+export function TaskForm({ onSave, onCancel, initialData, initialWeek, initialPriority }: { onSave: (data: any) => void, onCancel?: () => void, initialData?: ToDo, initialWeek?: number, initialPriority?: 'high' | 'mid' | 'low' }) {
   const [title, setTitle] = useState(initialData?.title || '');
   const [desc, setDesc] = useState(initialData?.description || '');
-  const [isCritical, setIsCritical] = useState(initialData?.isCritical ?? initialCritical ?? true);
+  const [priority, setPriority] = useState<'high' | 'mid' | 'low'>(initialData?.priority || initialPriority || 'mid');
   const [minWeek, setMinWeek] = useState<number | undefined>(initialData?.minWeek ?? initialWeek);
   const [specificDate, setSpecificDate] = useState(initialData?.specificDate || '');
   const [type, setType] = useState<'task' | 'appointment'>(initialData?.type || 'task');
@@ -46,6 +46,26 @@ export function TaskForm({ onSave, onCancel, initialData, initialWeek, initialCr
         <textarea placeholder="Additional details..." value={desc} onChange={e => setDesc(e.target.value)} style={{ minHeight: '100px' }} />
       </div>
       
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+        <label>Priority</label>
+        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+          {(['high', 'mid', 'low'] as const).map(p => (
+            <button 
+              key={p} 
+              className={priority === p ? 'btn-primary' : 'btn-secondary'} 
+              style={{ 
+                flex: 1, 
+                textTransform: 'capitalize',
+                background: priority === p ? (p === 'high' ? 'var(--critical)' : p === 'mid' ? 'var(--primary)' : 'var(--text-muted)') : ''
+              }} 
+              onClick={() => setPriority(p)}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-md)', alignItems: 'center' }}>
         {type === 'task' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
@@ -66,15 +86,11 @@ export function TaskForm({ onSave, onCancel, initialData, initialWeek, initialCr
             <input type="date" value={specificDate} onChange={e => setSpecificDate(e.target.value)} style={{ width: 'auto', padding: '0.5rem' }} />
           </div>
         )}
-        <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', cursor: 'pointer', margin: 0 }}>
-          <input type="checkbox" checked={isCritical} onChange={e => setIsCritical(e.target.checked)} style={{ width: '16px', height: '16px' }} />
-          Critical
-        </label>
       </div>
       
       <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
         {onCancel && <button className="btn-secondary" style={{ flex: 1 }} onClick={onCancel}>Cancel</button>}
-        <button className="btn-primary" style={{ flex: 2 }} onClick={() => onSave({ title, description: desc, isCritical, minWeek, specificDate, type })} disabled={!title}>
+        <button className="btn-primary" style={{ flex: 2 }} onClick={() => onSave({ title, description: desc, priority, minWeek, specificDate, type })} disabled={!title}>
           {initialData ? 'Update Intention' : 'Seal Intention'}
         </button>
       </div>
@@ -87,36 +103,75 @@ export default function ToDoView({ currentWeek, geminiService }: ToDoViewProps) 
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('critical');
   const [showAddModal, setShowAddModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLeafOnly, setIsLeafOnly] = useState(false);
+
+  const getBreadcrumb = (taskList: ToDo[], targetId: string, path: string[] = []): string[] | null => {
+    for (const t of taskList) {
+      if (t.id === targetId) return [...path, t.title];
+      const found = getBreadcrumb(t.subTasks, targetId, [...path, t.title]);
+      if (found) return found;
+    }
+    return null;
+  };
 
   const processedTasks = useMemo(() => {
-    let filtered = tasks.filter(t => t.parentTaskId === null);
+    const flatLeafNodes = (list: ToDo[]): ToDo[] => {
+      return list.reduce((acc: ToDo[], t) => {
+        if (t.subTasks.length === 0) {
+          acc.push(t);
+        } else {
+          acc.push(...flatLeafNodes(t.subTasks));
+        }
+        return acc;
+      }, []);
+    };
+
+    let filtered = isLeafOnly ? flatLeafNodes(tasks) : tasks.filter(t => t.parentTaskId === null);
     
     if (activeSubTab === 'complete') {
       filtered = filtered.filter(t => t.isComplete);
     } else {
       filtered = filtered.filter(t => !t.isComplete);
       if (activeSubTab === 'critical') {
-        filtered = filtered.filter(t => t.isCritical);
+        filtered = filtered.filter(t => t.priority === 'high');
       } else if (activeSubTab === 'nice') {
-        filtered = filtered.filter(t => !t.isCritical);
+        filtered = filtered.filter(t => t.priority !== 'high');
       }
     }
 
+    const prioValue = { high: 3, mid: 2, low: 1 };
+
     return filtered.sort((a, b) => {
+      const pA = prioValue[a.priority];
+      const pB = prioValue[b.priority];
+      if (pA !== pB) return pB - pA;
+      
       const weekA = a.minWeek ?? 0;
       const weekB = b.minWeek ?? 0;
       if (weekA !== weekB) return weekA - weekB;
+      
       const dateA = a.specificDate || '';
       const dateB = b.specificDate || '';
       if (dateA !== dateB) return dateA.localeCompare(dateB);
+      
       return a.title.localeCompare(b.title);
     });
-  }, [tasks, activeSubTab]);
+  }, [tasks, activeSubTab, isLeafOnly]);
 
   return (
     <div className="todo-view">
       {error && <ErrorBanner message={error} onClose={() => setError(null)} />}
       
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)', padding: '0 var(--space-xs)' }}>
+        <button 
+          className="btn-text" 
+          onClick={() => setIsLeafOnly(!isLeafOnly)}
+          style={{ fontSize: '0.7rem', opacity: isLeafOnly ? 1 : 0.6 }}
+        >
+          {isLeafOnly ? '▣ Showing Leaf Nodes' : '▢ Show Leaf Only'}
+        </button>
+      </div>
+
       <div className="card" style={{ padding: 0, marginBottom: 'var(--space-md)', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'stretch', background: 'var(--bg-color)', borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', flex: 1 }}>
@@ -138,7 +193,7 @@ export default function ToDoView({ currentWeek, geminiService }: ToDoViewProps) 
                 }}
                 onClick={() => setActiveSubTab(tab)}
               >
-                {tab}
+                {tab === 'critical' ? 'High' : tab === 'nice' ? 'Mid/Low' : 'Done'}
               </button>
             ))}
           </div>
@@ -160,7 +215,15 @@ export default function ToDoView({ currentWeek, geminiService }: ToDoViewProps) 
 
         <div className="todo-list" style={{ padding: 'var(--space-md) var(--space-lg)' }}>
           {processedTasks.map(task => (
-            <ToDoItem key={task.id} task={task} currentWeek={currentWeek} geminiService={geminiService} setError={setError} />
+            <ToDoItem 
+              key={task.id} 
+              task={task} 
+              currentWeek={currentWeek} 
+              geminiService={geminiService} 
+              setError={setError} 
+              isFlat={isLeafOnly}
+              breadcrumb={isLeafOnly ? getBreadcrumb(tasks, task.id)?.slice(0, -1).join(' > ') : undefined}
+            />
           ))}
           {processedTasks.length === 0 && (
             <p className="text-secondary italic" style={{ textAlign: 'center', padding: 'var(--space-xl) 0' }}>
@@ -185,17 +248,19 @@ export default function ToDoView({ currentWeek, geminiService }: ToDoViewProps) 
           }} 
           onCancel={() => setShowAddModal(false)}
           initialWeek={currentWeek}
-          initialCritical={activeSubTab === 'critical'}
+          initialPriority={activeSubTab === 'critical' ? 'high' : 'mid'}
         />
       </Modal>
     </div>
   );
 }
 
-function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, currentWeek: number, geminiService: GeminiService | null, setError: (msg: string | null) => void }) {
-  const { completeTask, splitTask, updateTask, deleteTask } = useStore();
+function ToDoItem({ task, currentWeek, geminiService, setError, isFlat, breadcrumb }: { task: ToDo, currentWeek: number, geminiService: GeminiService | null, setError: (msg: string | null) => void, isFlat?: boolean, breadcrumb?: string }) {
+  const { tasks, completeTask, splitTask, updateTask, deleteTask, addTask, moveTask } = useStore();
   const [isSplitting, setIsSplitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [splitSuggestions, setSplitSuggestions] = useState<any[] | null>(null);
@@ -258,6 +323,19 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
 
   const hasSubtasks = task.subTasks.length > 0;
 
+  const getAllPotentialParents = (list: ToDo[], excludeId: string): ToDo[] => {
+    return list.reduce((acc: ToDo[], t) => {
+      if (t.id === excludeId) return acc;
+      acc.push(t);
+      acc.push(...getAllPotentialParents(t.subTasks, excludeId));
+      return acc;
+    }, []);
+  };
+
+  const potentialParents = useMemo(() => getAllPotentialParents(tasks, task.id), [tasks, task.id]);
+
+  const priorityColor = task.priority === 'high' ? 'var(--critical)' : task.priority === 'mid' ? 'var(--primary)' : 'var(--text-muted)';
+
   return (
     <div style={{ marginBottom: 'var(--space-md)' }}>
       <Modal 
@@ -283,6 +361,61 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
         zIndex={3000}
       />
 
+      {/* Subtask Creation Modal */}
+      <Modal
+        isOpen={isAddingSubtask}
+        title={`New Sub-Intention for "${task.title}"`}
+        onConfirm={() => {}}
+        onCancel={() => setIsAddingSubtask(false)}
+        confirmText=""
+      >
+        <TaskForm 
+          onSave={(data) => {
+            addTask({ ...data, isComplete: false }, task.id);
+            setIsAddingSubtask(false);
+            setIsExpanded(true);
+          }} 
+          onCancel={() => setIsAddingSubtask(false)}
+          initialWeek={task.minWeek || currentWeek}
+          initialPriority={task.priority}
+        />
+      </Modal>
+
+      {/* Move Task Modal */}
+      <Modal
+        isOpen={isMoving}
+        title={`Move "${task.title}"`}
+        onConfirm={() => {}}
+        onCancel={() => setIsMoving(false)}
+        confirmText=""
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+          <p className="text-secondary text-xs">Select a new parent intention or move to the top level.</p>
+          <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <button 
+              className="btn-secondary" 
+              style={{ textAlign: 'left', fontSize: '0.8rem', opacity: task.parentTaskId === null ? 0.5 : 1 }}
+              onClick={() => { moveTask(task.id, null); setIsMoving(false); }}
+              disabled={task.parentTaskId === null}
+            >
+              Top Level
+            </button>
+            {potentialParents.map(p => (
+              <button 
+                key={p.id}
+                className="btn-secondary" 
+                style={{ textAlign: 'left', fontSize: '0.8rem', opacity: task.parentTaskId === p.id ? 0.5 : 1 }}
+                onClick={() => { moveTask(task.id, p.id); setIsMoving(false); }}
+                disabled={task.parentTaskId === p.id}
+              >
+                {p.title}
+              </button>
+            ))}
+          </div>
+          <button className="btn-text" onClick={() => setIsMoving(false)}>Cancel</button>
+        </div>
+      </Modal>
+
       {/* Detail & Edit Modal */}
       <Modal
         isOpen={isDetailOpen}
@@ -299,6 +432,9 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
           />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            {breadcrumb && (
+              <div className="text-xs text-secondary italic" style={{ marginBottom: '-8px' }}>{breadcrumb}</div>
+            )}
             <div>
               <label>Details</label>
               <p className="text-primary" style={{ lineHeight: 1.5, margin: 0 }}>{task.description || 'No additional context.'}</p>
@@ -310,11 +446,13 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
               </div>
               <div>
                 <label>Priority</label>
-                <div className="text-sm">{task.isCritical ? 'Critical Path' : 'Nice to Have'}</div>
+                <div className="text-sm" style={{ color: priorityColor, fontWeight: 700, textTransform: 'capitalize' }}>{task.priority}</div>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-md)' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)', marginTop: 'var(--space-md)' }}>
               <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setIsEditing(true)}>Edit</button>
+              <button className="btn-secondary" style={{ flex: 1 }} onClick={() => { setIsAddingSubtask(true); setIsDetailOpen(false); }}>Add Subtask</button>
+              <button className="btn-secondary" style={{ flex: 1 }} onClick={() => { setIsMoving(true); setIsDetailOpen(false); }}>Move</button>
               <button className="btn-secondary" style={{ flex: 1, color: 'var(--critical)' }} onClick={() => setShowDeleteModal(true)}>Delete</button>
             </div>
           </div>
@@ -322,6 +460,9 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
       </Modal>
 
       <div className="todo-card" onClick={() => setIsDetailOpen(true)}>
+        {breadcrumb && (
+          <div className="text-xs text-secondary italic" style={{ marginBottom: '4px', fontSize: '0.6rem' }}>{breadcrumb}</div>
+        )}
         <div className="todo-content-wrapper">
           <input 
             type="checkbox" 
@@ -336,7 +477,7 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
           />
           <div className="todo-text-main">
             <div className="todo-title-row">
-              {hasSubtasks && (
+              {!isFlat && hasSubtasks && (
                 <button 
                   onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
                   style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '0.7rem' }}
@@ -348,6 +489,7 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
                 {task.title}
               </div>
               {task.type === 'appointment' && <span className="tag tag-primary" style={{ fontSize: '0.6rem' }}>APPT</span>}
+              <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: priorityColor, marginLeft: '4px' }}></div>
             </div>
             <div className="text-xs text-secondary line-clamp-2">{task.description}</div>
           </div>
@@ -357,16 +499,19 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
            <div className="text-xs text-secondary font-bold">
               {task.type === 'task' ? (task.minWeek ? `W${task.minWeek}+` : 'Anytime') : task.specificDate}
            </div>
-           {!task.locked && (
-             <button 
-               className="btn-text" 
-               disabled={isSplitting || !geminiService} 
-               onClick={handleSplit}
-               style={{ fontSize: '0.7rem' }}
-             >
-               {isSplitting ? '...' : 'AI Split'}
-             </button>
-           )}
+           <div style={{ display: 'flex', gap: '8px' }}>
+             {!isFlat && !task.locked && (
+               <button 
+                 className="btn-text" 
+                 disabled={isSplitting || !geminiService} 
+                 onClick={handleSplit}
+                 style={{ fontSize: '0.7rem' }}
+               >
+                 {isSplitting ? '...' : 'AI Split'}
+               </button>
+             )}
+             <button className="btn-text" onClick={(e) => { e.stopPropagation(); setIsAddingSubtask(true); }} style={{ fontSize: '0.7rem' }}>+ Sub</button>
+           </div>
         </div>
       </div>
 
@@ -395,7 +540,7 @@ function ToDoItem({ task, currentWeek, geminiService, setError }: { task: ToDo, 
         </div>
       )}
 
-      {hasSubtasks && isExpanded && (
+      {!isFlat && hasSubtasks && isExpanded && (
         <div style={{ marginLeft: 'var(--space-lg)', borderLeft: '1px solid var(--border)', paddingLeft: 'var(--space-md)' }}>
           {task.subTasks.map(sub => (
             <ToDoItem key={sub.id} task={sub} currentWeek={currentWeek} geminiService={geminiService} setError={setError} />

@@ -5,7 +5,7 @@ export const calculateProgress = (tasks: ToDo[], currentWeek: number) => {
   const weeklyTasks: ToDo[] = [];
 
   const traverse = (t: ToDo) => {
-    if (t.isCritical && (t.minWeek === undefined || t.minWeek <= currentWeek)) {
+    if (t.priority === 'high' && (t.minWeek === undefined || t.minWeek <= currentWeek)) {
       allCriticalTasks.push(t);
     }
     if (t.minWeek === currentWeek) {
